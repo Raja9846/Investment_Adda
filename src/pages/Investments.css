@@ -1,0 +1,149 @@
+/* Investments.css */
+
+.investments-page {
+  animation: fadeIn 0.4s ease;
+  padding-bottom: 80px;
+}
+
+.page-title {
+  text-align: center;
+  color: white;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.investments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.inv-card {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  gap: 15px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.inv-card.is-done {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+
+.inv-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.txn-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.inv-name {
+  font-weight: 600;
+  font-size: 17px;
+  color: #333;
+}
+
+.inv-amount-section {
+  flex: 0 0 100px;
+}
+
+.main-amount-input {
+  border: none;
+  border-bottom: 2px solid #eee;
+  background: transparent;
+  width: 100%;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  padding: 5px 0;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.main-amount-input:focus {
+  border-bottom-color: #5c7cfa;
+}
+
+.inv-actions {
+  flex: 0 0 auto;
+}
+
+.tick-btn {
+  background: #333;
+  color: white;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.tick-btn:hover {
+  transform: scale(1.05);
+  background: #000;
+}
+
+.tick-btn.active {
+  background: #e0e0e0;
+  color: #888;
+}
+
+.dull-mode {
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .inv-card {
+    padding: 12px 15px;
+    gap: 10px;
+  }
+  
+  .inv-name {
+    font-size: 15px;
+  }
+  
+  .txn-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  .main-amount-input {
+    font-size: 14px;
+    width: 80px;
+  }
+}

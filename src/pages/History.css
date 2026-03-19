@@ -1,0 +1,155 @@
+/* History.css */
+
+.history-page {
+  animation: fadeIn 0.4s ease;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.history-container {
+  padding: 30px;
+  border-radius: 20px;
+  height: 65vh;
+  margin-top: 20px;
+}
+
+.history-scroll-area {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Customize Scrollbar */
+.history-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+
+.transaction-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  margin-bottom: 18px;
+  border: 1px solid #f1f3f5;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.transaction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  background: #ffffff;
+}
+
+.txn-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.txn-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.txn-name {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text-dark);
+}
+
+.txn-date {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.txn-right {
+  text-align: right;
+}
+
+.txn-amount {
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
+
+.txn-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.badge-success {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--success);
+}
+
+.badge-danger {
+  background: rgba(255, 77, 77, 0.1);
+  color: var(--danger);
+}
+
+.clickable-txn {
+  cursor: pointer;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  position: relative;
+}
+
+.clickable-txn:hover {
+  background: #fff5f5;
+  border-color: var(--danger);
+  transform: scale(1.01);
+}
+
+.clickable-txn::after {
+  content: 'Click to Reflect';
+  position: absolute;
+  top: 5px;
+  right: 15px;
+  font-size: 10px;
+  color: var(--danger);
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .history-container {
+    padding: 15px;
+  }
+  
+  .transaction-card {
+    padding: 15px;
+  }
+  
+  .txn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .txn-amount {
+    font-size: 16px;
+  }
+}

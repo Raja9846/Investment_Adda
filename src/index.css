@@ -1,0 +1,119 @@
+:root {
+  --primary: #1e88ff;
+  --primary-hover: #005ce6;
+  --bg-gradient-start: #667eea;
+  --bg-gradient-end: #764ba2;
+  --bg-light-start: #f4f7ff;
+  --bg-light-end: #eaf1ff;
+  --text-dark: #333;
+  --text-light: #fff;
+  --danger: #ff4d4d;
+  --success: #28a745;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  /* Default to the app gradient, specific pages can override */
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  min-height: 100vh;
+  color: var(--text-dark);
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.white-card {
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+/* Form Styles */
+.input-field {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  font-size: 15px;
+  transition: box-shadow 0.3s ease;
+}
+
+.input-field:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65px;
+  height: 65px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(30,136,255,0.5);
+  transition: transform 0.3s;
+  z-index: 10;
+  border: none;
+}
+
+.fab:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.fab svg {
+  width: 28px;
+  height: 28px;
+}
+
+@media (max-width: 768px) {
+  .fab {
+    bottom: 90px;
+  }
+}
+
+.dull-mode {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  pointer-events: none !important;
+  cursor: default;
+}

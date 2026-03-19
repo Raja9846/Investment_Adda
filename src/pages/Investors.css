@@ -1,0 +1,243 @@
+/* Investors.css */
+
+.investors-page {
+  animation: fadeIn 0.4s ease;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.investor-row-card {
+  padding: 20px 25px;
+  margin-top: 20px;
+  border-radius: 16px;
+}
+
+.investor-main-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.inv-person-name {
+  font-weight: 700;
+  font-size: 16px;
+  width: 90px;
+  color: var(--text-dark);
+}
+
+.compact-input-edit {
+  padding: 8px 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-weight: 600;
+  width: 90px;
+  outline: none;
+  transition: all 0.3s;
+  background: #f8f9fa;
+  font-family: inherit;
+  color: #1a1a1a;
+}
+
+.compact-input-edit:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30, 136, 255, 0.1);
+}
+
+.percent-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.percent-input {
+  width: 60px;
+  padding-right: 18px;
+}
+
+.percent-sign {
+  position: absolute;
+  right: 8px;
+  font-weight: 700;
+  color: #888;
+  font-size: 14px;
+}
+
+.icon-btn {
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.drop-btn {
+  background: #f0f0f0;
+  color: #555;
+  margin-left: auto; /* Push buttons to right on desktop */
+}
+
+.drop-btn:hover {
+  background: #e4e4e4;
+}
+
+.tick-btn, .small-tick {
+  background: #333; /* Dark color first */
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.tick-btn.active, .small-tick.active {
+  background: #e0e0e0; /* Light color when clicked */
+  color: #20c997;
+}
+
+.dull-mode {
+  opacity: 0.5;
+}
+
+/* Details Dropdown */
+.months-details {
+  display: none;
+  margin-top: 20px;
+  border-top: 1px dashed #ddd;
+  padding-top: 20px;
+  animation: slideDown 0.3s ease;
+}
+
+.months-details.show {
+  display: block;
+}
+
+.info-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 5px;
+  cursor: help;
+  color: #888;
+  transition: 0.3s;
+}
+
+.info-icon-wrapper:hover {
+  color: #5c7cfa;
+}
+
+.is-done-card {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  pointer-events: none; /* Disable interaction for completed cards */
+}
+
+.is-done-card .tick-btn {
+  background: #e0e0e0 !important;
+  color: #666 !important;
+}
+
+.month-amount-input {
+  border: none;
+  border-bottom: 2px solid #eaeaea;
+  outline: none;
+  text-align: center;
+  font-size: 14px;
+  width: 60px;
+  padding: 5px;
+  background: transparent;
+  color: #333;
+}
+
+.month-amount-input:focus {
+  border-bottom-color: #5c7cfa;
+}
+
+.month-card {
+  background: #f8f9fa;
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #eee;
+  transition: transform 0.2s;
+}
+
+.month-title {
+  font-weight: 500;
+  color: #555;
+}
+
+.month-amount-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  width: 100px;
+  font-weight: 600;
+  outline: none;
+  text-align: center;
+  background: white;
+}
+
+.small-tick {
+  width: 32px;
+  height: 32px;
+}
+
+.add-month-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 20px auto 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(30,136,255,0.3);
+  transition: transform 0.3s;
+}
+
+.add-month-btn:hover {
+  transform: scale(1.1);
+  background: var(--primary-hover);
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .investor-main-row {
+    justify-content: center;
+  }
+  
+  .drop-btn {
+    margin-left: 0;
+  }
+}
+
+.add-month-btn-inline {
+  background: transparent;
+  border: 1px dashed #ccc;
+  color: #555;
+  padding: 8px 15px;
+  border-radius: 8px;
+  margin: 15px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  width: fit-content;
+  transition: 0.3s;
+}
+
+.add-month-btn-inline:hover {
+  background: #f0f0f0;
+  border-color: var(--primary);
+  color: var(--primary);
+}
