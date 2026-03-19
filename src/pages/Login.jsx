@@ -1,29 +1,42 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock } from 'lucide-react';
-import './Login.css'; // We will create this
+import { Mail, Lock, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import './Login.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    // Hardcoded credentials as per original file
-    const correctUser = "admin";
-    const correctPass = "12345";
+    setError("");
+    setLoading(true);
 
-    if (username === "" || password === "") {
+    if (email === "" || password === "") {
       setError("⚠ Please fill all fields");
-    } else if (username === correctUser && password === correctPass) {
-      setError("");
-      alert("✅ Login Successful!");
-      navigate('/dashboard');
-    } else {
-      setError("❌ Invalid Username or Password");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError(`❌ ${authError.message}`);
+      } else if (data.user) {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError("❌ An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,13 +47,14 @@ const Login = () => {
         
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <User className="input-icon" size={18} />
+            <Mail className="input-icon" size={18} />
             <input 
-              type="text" 
+              type="email" 
               className="input-field-auth"
-              placeholder="Username" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Email Address" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -52,10 +66,17 @@ const Login = () => {
               placeholder="Password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="btn-primary">Login</button>
+          <button 
+            type="submit" 
+            className="btn-primary" 
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="spinner" size={18} /> : "Login"}
+          </button>
         </form>
 
         {error && <p className="error-message">{error}</p>}

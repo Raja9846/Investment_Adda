@@ -1,11 +1,13 @@
 import { Outlet, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   List, 
   Users, 
   TrendingUp, 
-  Clock 
+  Clock,
+  LogOut
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import './Layout.css';
 
 const Layout = () => {
@@ -13,12 +15,39 @@ const Layout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isViewOnly = searchParams.get('view') === 'dashboard';
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session && !isViewOnly) {
+        navigate('/login', { replace: true });
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session && !isViewOnly) {
+        navigate('/login', { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isViewOnly, navigate]);
+
+  useEffect(() => {
+    // If in view-only mode but trying to access other routes, redirect to dashboard
     if (isViewOnly && location.pathname !== '/dashboard') {
       navigate('/dashboard?view=dashboard', { replace: true });
     }
   }, [isViewOnly, location.pathname, navigate]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   const navItems = [
     { path: '/dashboard', icon: <List size={22} />, label: 'Dashboard' },
@@ -43,6 +72,9 @@ const Layout = () => {
                 {item.icon}
               </Link>
             ))}
+            <button onClick={handleLogout} className="nav-link logout-btn" title="Logout">
+              <LogOut size={22} />
+            </button>
           </div>
         </nav>
       )}
@@ -64,6 +96,9 @@ const Layout = () => {
               {item.icon}
             </Link>
           ))}
+          <button onClick={handleLogout} className="nav-link logout-btn">
+            <LogOut size={22} />
+          </button>
         </nav>
       )}
     </div>
