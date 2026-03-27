@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from '../components/ConfirmModal';
 import './AddForms.css';
 
 const AddMember = () => {
@@ -10,6 +11,7 @@ const AddMember = () => {
     name: '',
     phone: ''
   });
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,22 +21,24 @@ const AddMember = () => {
     e.preventDefault();
     setLoading(true);
 
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { error } = await supabase.from('investors').insert({
       name: formData.name,
       phone: formData.phone,
       amount: 0,
       interest_percent: 0,
       months: 0,
-      category: 'investment'
+      category: 'investment',
+      user_id: user?.id
     });
 
     setLoading(false);
 
     if (error) {
-      alert('Error adding member: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error adding member: ' + error.message, type: 'error' });
     } else {
-      alert('Member Added Successfully!');
-      navigate('/investments');
+      setModal({ isOpen: true, title: 'Success! 🚀', message: 'Member Added Successfully!', type: 'success' });
     }
   };
 
@@ -75,6 +79,22 @@ const AddMember = () => {
           </button>
         </form>
       </div>
+
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        onClose={() => {
+            setModal({ ...modal, isOpen: false });
+            if (modal.type === 'success') navigate('/investments');
+        }}
+        onConfirm={() => {
+            setModal({ ...modal, isOpen: false });
+            if (modal.type === 'success') navigate('/investments');
+        }}
+        title={modal.title}
+        message={modal.message}
+        confirmText="OK"
+        showCancel={false}
+      />
     </div>
   );
 };

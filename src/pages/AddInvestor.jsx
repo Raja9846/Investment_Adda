@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from '../components/ConfirmModal';
 import './AddForms.css';
 
 const AddInvestor = () => {
@@ -14,6 +15,7 @@ const AddInvestor = () => {
     aadhaar: '',
     phone: ''
   });
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,6 +25,8 @@ const AddInvestor = () => {
     e.preventDefault();
     setLoading(true);
 
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { error } = await supabase.from('investors').insert({
       name: formData.name,
       amount: parseFloat(formData.amount),
@@ -30,16 +34,16 @@ const AddInvestor = () => {
       months: parseInt(formData.months),
       aadhaar: formData.aadhaar,
       phone: formData.phone,
-      category: 'investor'
+      category: 'investor',
+      user_id: user?.id
     });
 
     setLoading(false);
 
     if (error) {
-      alert('Error adding investor: ' + error.message);
+      setModal({ isOpen: true, title: 'Error', message: 'Error adding investor: ' + error.message, type: 'error' });
     } else {
-      alert('Investor Added Successfully!');
-      navigate('/investors');
+      setModal({ isOpen: true, title: 'Success! 🚀', message: 'Investor Added Successfully!', type: 'success' });
     }
   };
 
@@ -132,6 +136,22 @@ const AddInvestor = () => {
           </button>
         </form>
       </div>
+
+      <ConfirmModal 
+        isOpen={modal.isOpen}
+        onClose={() => {
+            setModal({ ...modal, isOpen: false });
+            if (modal.type === 'success') navigate('/investors');
+        }}
+        onConfirm={() => {
+            setModal({ ...modal, isOpen: false });
+            if (modal.type === 'success') navigate('/investors');
+        }}
+        title={modal.title}
+        message={modal.message}
+        confirmText="OK"
+        showCancel={false}
+      />
     </div>
   );
 };

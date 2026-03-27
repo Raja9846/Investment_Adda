@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from '../components/ConfirmModal';
 import './Investments.css';
 
 const Investments = () => {
@@ -9,13 +10,20 @@ const Investments = () => {
   const [investors, setInvestors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ 
+    isOpen: false, 
+    data: null, 
+    title: 'Confirm Payment', 
+    message: '', 
+    showCancel: true 
+  });
 
   const fetchInvestors = async () => {
     const { data, error } = await supabase
       .from('investors')
       .select('*')
       .eq('category', 'investment')
-      .order('name');
+      .order('created_at', { ascending: false });
     
     if (data) {
       setInvestors(data);
@@ -67,11 +75,38 @@ const Investments = () => {
 
     if (updateError) {
         setProcessing(prev => ({ ...prev, [investor.id]: false }));
-        alert("Error: " + updateError.message);
+        setConfirmModal({
+            isOpen: true,
+            title: 'Error',
+            message: updateError.message,
+            showCancel: false,
+            data: null
+        });
         return;
     }
     
     setProcessing(prev => ({ ...prev, [investor.id]: false }));
+  };
+
+  const requestComplete = (investor) => {
+    const amount = parseFloat(investor.amount) || 0;
+    if (amount <= 0) {
+      setConfirmModal({
+          isOpen: true,
+          title: 'Invalid Amount',
+          message: 'Please enter a valid amount before completing.',
+          showCancel: false,
+          data: null
+      });
+      return;
+    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Payment',
+      message: `Are you sure you want to mark payment of ₹${investor.amount} for ${investor.name} as completed?`,
+      showCancel: true,
+      data: investor
+    });
   };
 
   if (loading) return <div className="investments-page">Loading...</div>;
@@ -106,7 +141,7 @@ const Investments = () => {
             <div className="inv-actions">
               <button 
                 className={`icon-btn tick-btn ${investor.is_done ? 'active' : ''} ${processing[investor.id] ? 'dull-mode' : ''}`}
-                onClick={() => handleComplete(investor)}
+                onClick={() => requestComplete(investor)}
                 disabled={investor.is_done || processing[investor.id]}
               >
                 <Check size={20} />
@@ -119,6 +154,21 @@ const Investments = () => {
       <button className="fab" onClick={() => navigate('/add-member')}>
         <Plus />
       </button>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => {
+          if (confirmModal.showCancel && confirmModal.data) {
+            handleComplete(confirmModal.data);
+          }
+          setConfirmModal({ ...confirmModal, isOpen: false });
+        }}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.showCancel ? "Confirm" : "OK"}
+        showCancel={confirmModal.showCancel}
+      />
     </div>
   );
 };

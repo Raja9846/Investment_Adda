@@ -8,6 +8,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from './ConfirmModal';
 import './Layout.css';
 
 const Layout = () => {
@@ -16,6 +17,7 @@ const Layout = () => {
   const [searchParams] = useSearchParams();
   const isViewOnly = searchParams.get('view') === 'dashboard';
   const [session, setSession] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -72,7 +74,7 @@ const Layout = () => {
                 {item.icon}
               </Link>
             ))}
-            <button onClick={handleLogout} className="nav-link logout-btn" title="Logout">
+            <button onClick={() => setShowLogoutConfirm(true)} className="nav-link logout-btn" title="Logout">
               <LogOut size={22} />
             </button>
           </div>
@@ -96,11 +98,23 @@ const Layout = () => {
               {item.icon}
             </Link>
           ))}
-          <button onClick={handleLogout} className="nav-link logout-btn">
+          <button onClick={() => setShowLogoutConfirm(true)} className="nav-link logout-btn">
             <LogOut size={22} />
           </button>
         </nav>
       )}
+      {/* ================= CONFIRM MODAL ================= */}
+      <ConfirmModal 
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={() => {
+          handleLogout();
+          setShowLogoutConfirm(false);
+        }}
+        title="Confirm Logout"
+        message="Are you sure you want to log out?"
+        confirmText="Logout"
+      />
     </div>
   );
 };

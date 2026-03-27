@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Check, Plus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from '../components/ConfirmModal';
 import './Investors.css';
 
 const Investors = () => {
@@ -13,13 +14,14 @@ const Investors = () => {
   const [monthsData, setMonthsData] = useState({});
   const [paidMonths, setPaidMonths] = useState({}); 
   const [processing, setProcessing] = useState({}); // Tracking clicks to prevent double-clicks
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, data: null });
   
   const fetchInvestors = async () => {
     const { data, error } = await supabase
       .from('investors')
       .select('*')
       .eq('category', 'investor')
-      .order('name');
+      .order('created_at', { ascending: false });
     
     if (data) {
       setInvestors(data);
@@ -137,14 +139,17 @@ const Investors = () => {
 
     // ADD BACK principal to the total balance if marking as done
     if (!currentStatus) {
+        const { data: { user } } = await supabase.auth.getUser();
         const investor = investors.find(inv => inv.id === id);
+        
         await supabase.from('transactions').insert({
           name: `${investor.name} (Repayment)`,
           initials: investor.name.charAt(0).toUpperCase(),
           amount: parseFloat(investor.amount),
           status: 'Completed',
-          txn_type: 'Investment', // Adding to 'Investment' type adds to dashboard total_inv and balance
-          bg_color: '#5c7cfa' 
+          txn_type: 'Repayment', 
+          bg_color: '#5c7cfa',
+          user_id: user?.id
         });
     }
     
@@ -158,10 +163,13 @@ const Investors = () => {
 
     const amount = parseFloat(monthAmount);
 
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { error: payError } = await supabase.from('interest_payments').insert({
       investor_id: investorId,
       month_number: monthId,
-      amount: amount
+      amount: amount,
+      user_id: user?.id
     });
 
     if (payError) {
@@ -170,6 +178,25 @@ const Investors = () => {
     }
     
     setProcessing(prev => ({ ...prev, [key]: false }));
+  };
+
+  const requestInvestorDone = (id, currentStatus) => {
+    if (currentStatus) return; // Only confirm when marking AS done
+    const investor = investors.find(inv => inv.id === id);
+    setConfirmModal({
+      isOpen: true,
+      type: 'principal',
+      data: { id, currentStatus, name: investor.name, amount: investor.amount }
+    });
+  };
+
+  const requestMonthComplete = (investorId, monthId, monthAmount) => {
+    const investor = investors.find(inv => inv.id === investorId);
+    setConfirmModal({
+      isOpen: true,
+      type: 'interest',
+      data: { investorId, monthId, monthAmount, name: investor.name }
+    });
   };
 
   if (loading) return <div className="investors-page">Loading...</div>;
@@ -234,7 +261,7 @@ const Investors = () => {
 
             <button 
               className={`icon-btn tick-btn ${investor.is_done ? 'active' : ''} ${processing[`done_${investor.id}`] ? 'dull-mode' : ''}`}
-              onClick={() => toggleInvestorDone(investor.id, investor.is_done)}
+              onClick={() => requestInvestorDone(investor.id, investor.is_done)}
               disabled={investor.is_done || processing[`done_${investor.id}`]}
             >
               <Check size={18} />
@@ -260,7 +287,7 @@ const Investors = () => {
                   className={`icon-btn small-tick ${month.done ? 'active' : ''}`}
                   onClick={() => {
                       const m = monthsData[investor.id].find(m => m.id === month.id);
-                      handleMonthComplete(investor.id, month.id, m.amount);
+                      requestMonthComplete(investor.id, month.id, m.amount);
                   }}
                   disabled={month.done || processing[`${investor.id}_${month.id}`]}
                 >
@@ -281,6 +308,26 @@ const Investors = () => {
       <button className="fab" onClick={() => navigate('/add-investor')}>
         <Plus />
       </button>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, data: null })}
+        onConfirm={() => {
+          if (confirmModal.type === 'principal') {
+            toggleInvestorDone(confirmModal.data.id, confirmModal.data.currentStatus);
+          } else {
+            handleMonthComplete(confirmModal.data.investorId, confirmModal.data.monthId, confirmModal.data.monthAmount);
+          }
+          setConfirmModal({ isOpen: false, type: null, data: null });
+        }}
+        title="Confirm Payment"
+        message={
+            confirmModal.type === 'principal' 
+            ? `Are you sure you want to mark principal repayment of ₹${confirmModal.data?.amount} for ${confirmModal.data?.name} as completed?`
+            : `Are you sure you want to mark Month ${confirmModal.data?.monthId} interest of ₹${confirmModal.data?.monthAmount} for ${confirmModal.data?.name} as completed?`
+        }
+        confirmText="Confirm"
+      />
     </div>
   );
 };
