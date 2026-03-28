@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Check, Plus, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Plus, Info, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -21,6 +21,7 @@ const Investors = () => {
       .from('investors')
       .select('*')
       .eq('category', 'investor')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
     
     if (data) {
@@ -32,7 +33,8 @@ const Investors = () => {
   const fetchPaidMonths = async () => {
     const { data, error } = await supabase
       .from('interest_payments')
-      .select('*');
+      .select('*')
+      .eq('is_deleted', false);
     
     if (data) {
       const mapping = {};
@@ -179,6 +181,34 @@ const Investors = () => {
     
     setProcessing(prev => ({ ...prev, [key]: false }));
   };
+  
+  const handleDeleteInvestor = async (id) => {
+    setProcessing(prev => ({ ...prev, [`delete_${id}`]: true }));
+    const { error } = await supabase
+      .from('investors')
+      .update({ is_deleted: true })
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting investor:', error);
+    }
+    setProcessing(prev => ({ ...prev, [`delete_${id}`]: false }));
+  };
+
+  const handleDeleteMonth = async (investorId, monthId) => {
+    const key = `delete_${investorId}_${monthId}`;
+    setProcessing(prev => ({ ...prev, [key]: true }));
+    const { error } = await supabase
+      .from('interest_payments')
+      .update({ is_deleted: true })
+      .eq('investor_id', investorId)
+      .eq('month_number', monthId);
+    
+    if (error) {
+      console.error('Error deleting interest payment:', error);
+    }
+    setProcessing(prev => ({ ...prev, [key]: false }));
+  };
 
   const requestInvestorDone = (id, currentStatus) => {
     if (currentStatus) return; // Only confirm when marking AS done
@@ -196,6 +226,24 @@ const Investors = () => {
       isOpen: true,
       type: 'interest',
       data: { investorId, monthId, monthAmount, name: investor.name }
+    });
+  };
+
+  const requestDeleteInvestor = (id) => {
+    const investor = investors.find(inv => inv.id === id);
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete_investor',
+      data: { id, name: investor.name }
+    });
+  };
+
+  const requestDeleteMonth = (investorId, monthId) => {
+    const investor = investors.find(inv => inv.id === investorId);
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete_month',
+      data: { investorId, monthId, name: investor.name }
     });
   };
 
@@ -266,6 +314,14 @@ const Investors = () => {
             >
               <Check size={18} />
             </button>
+
+            <button 
+              className="icon-btn delete-btn" 
+              onClick={() => requestDeleteInvestor(investor.id)}
+              disabled={processing[`delete_${investor.id}`]}
+            >
+              <Trash2 size={18} />
+            </button>
           </div>
 
           <div className={`months-details ${activeInvestorId === investor.id ? 'show' : ''}`}>
@@ -293,6 +349,13 @@ const Investors = () => {
                 >
                   <Check size={14} />
                 </button>
+                <button 
+                  className="icon-btn small-delete"
+                  onClick={() => requestDeleteMonth(investor.id, month.id)}
+                  disabled={processing[`delete_${investor.id}_${month.id}`]}
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
             <button className="add-month-btn-inline" onClick={() => {
@@ -315,18 +378,29 @@ const Investors = () => {
         onConfirm={() => {
           if (confirmModal.type === 'principal') {
             toggleInvestorDone(confirmModal.data.id, confirmModal.data.currentStatus);
-          } else {
+          } else if (confirmModal.type === 'interest') {
             handleMonthComplete(confirmModal.data.investorId, confirmModal.data.monthId, confirmModal.data.monthAmount);
+          } else if (confirmModal.type === 'delete_investor') {
+            handleDeleteInvestor(confirmModal.data.id);
+          } else if (confirmModal.type === 'delete_month') {
+            handleDeleteMonth(confirmModal.data.investorId, confirmModal.data.monthId);
           }
           setConfirmModal({ isOpen: false, type: null, data: null });
         }}
-        title="Confirm Payment"
-        message={
-            confirmModal.type === 'principal' 
-            ? `Are you sure you want to mark principal repayment of ₹${confirmModal.data?.amount} for ${confirmModal.data?.name} as completed?`
-            : `Are you sure you want to mark Month ${confirmModal.data?.monthId} interest of ₹${confirmModal.data?.monthAmount} for ${confirmModal.data?.name} as completed?`
+        title={
+          confirmModal.type?.startsWith('delete') ? 'Confirm Deletion' : 'Confirm Payment'
         }
-        confirmText="Confirm"
+        message={
+          confirmModal.type === 'principal' 
+          ? `Are you sure you want to mark principal repayment of ₹${confirmModal.data?.amount} for ${confirmModal.data?.name} as completed?`
+          : confirmModal.type === 'interest'
+          ? `Are you sure you want to mark Month ${confirmModal.data?.monthId} interest of ₹${confirmModal.data?.monthAmount} for ${confirmModal.data?.name} as completed?`
+          : confirmModal.type === 'delete_investor'
+          ? `Are you sure you want to delete ${confirmModal.data?.name}? This will hide them from the list, but will not change the total balance.`
+          : `Are you sure you want to delete Month ${confirmModal.data?.monthId} interest for ${confirmModal.data?.name}? This will hide it from the list, but will not change the total balance.`
+        }
+        confirmText={confirmModal.type?.startsWith('delete') ? "Delete" : "Confirm"}
+        isDanger={confirmModal.type?.startsWith('delete')}
       />
     </div>
   );

@@ -76,6 +76,14 @@
   color: white;
 }
 
+.btn-confirm.btn-danger {
+  background: #fa5252;
+}
+
+.btn-confirm.btn-danger:hover {
+  background: #f03e3e;
+}
+
 .btn-confirm:hover {
   background: #228be6;
   transform: scale(1.05);

@@ -8,7 +8,8 @@ const ConfirmModal = ({
   message, 
   confirmText = "Confirm", 
   cancelText = "Cancel",
-  showCancel = true 
+  showCancel = true,
+  isDanger = false
 }) => {
   if (!isOpen) return null;
 
@@ -23,7 +24,7 @@ const ConfirmModal = ({
               {cancelText}
             </button>
           )}
-          <button className="btn-confirm" onClick={onConfirm}>
+          <button className={`btn-confirm ${isDanger ? 'btn-danger' : ''}`} onClick={onConfirm}>
             {confirmText}
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -23,6 +23,7 @@ const Investments = () => {
       .from('investors')
       .select('*')
       .eq('category', 'investment')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
     
     if (data) {
@@ -88,6 +89,29 @@ const Investments = () => {
     setProcessing(prev => ({ ...prev, [investor.id]: false }));
   };
 
+  const handleDelete = async (id) => {
+    setProcessing(prev => ({ ...prev, [`delete_${id}`]: true }));
+    const { error } = await supabase
+      .from('investors')
+      .update({ is_deleted: true })
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting investment:', error);
+    }
+    setProcessing(prev => ({ ...prev, [`delete_${id}`]: false }));
+  };
+
+  const requestDelete = (investor) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Confirm Deletion',
+      message: `Are you sure you want to delete ${investor.name}? This will hide it from the list, but will not change the total balance.`,
+      showCancel: true,
+      data: { ...investor, action: 'delete' }
+    });
+  };
+
   const requestComplete = (investor) => {
     const amount = parseFloat(investor.amount) || 0;
     if (amount <= 0) {
@@ -146,6 +170,14 @@ const Investments = () => {
               >
                 <Check size={20} />
               </button>
+
+              <button 
+                className="icon-btn delete-btn" 
+                onClick={() => requestDelete(investor)}
+                disabled={processing[`delete_${investor.id}`]}
+              >
+                <Trash2 size={20} />
+              </button>
             </div>
           </div>
         ))}
@@ -160,14 +192,19 @@ const Investments = () => {
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={() => {
           if (confirmModal.showCancel && confirmModal.data) {
-            handleComplete(confirmModal.data);
+            if (confirmModal.data.action === 'delete') {
+              handleDelete(confirmModal.data.id);
+            } else {
+              handleComplete(confirmModal.data);
+            }
           }
           setConfirmModal({ ...confirmModal, isOpen: false });
         }}
         title={confirmModal.title}
         message={confirmModal.message}
-        confirmText={confirmModal.showCancel ? "Confirm" : "OK"}
+        confirmText={confirmModal.data?.action === 'delete' ? "Delete" : (confirmModal.showCancel ? "Confirm" : "OK")}
         showCancel={confirmModal.showCancel}
+        isDanger={confirmModal.data?.action === 'delete'}
       />
     </div>
   );

@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { Trash2 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 import './History.css';
 
 const History = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, data: null });
 
   useEffect(() => {
     const fetchTransactions = async () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false });
       
       if (data) {
@@ -39,7 +43,6 @@ const History = () => {
     if (txn.status === 'Completed' || processing[txn.id]) return;
     setProcessing(prev => ({ ...prev, [txn.id]: true }));
 
-    // 1. Update Transaction to Completed
     const { error: updateError } = await supabase
       .from('transactions')
       .update({ status: 'Completed' })
@@ -49,11 +52,44 @@ const History = () => {
         setProcessing(prev => ({ ...prev, [txn.id]: false }));
         return;
     }
+    setProcessing(prev => ({ ...prev, [txn.id]: false }));
+  };
 
-    // 2. Update Dashboard Balance (app_state) - handled by DB triggers now if applicable, 
-    // but the previous code had manual logic. Let's keep it if triggers aren't fully relied on yet 
-    // OR simplify if we trust triggers. The request says "add to history page the person, amount and time".
-    // Triggers already handle the app_state mostly.
+  const handleDeleteTransaction = async (txn) => {
+    setProcessing(prev => ({ ...prev, [`delete_${txn.id}`]: true }));
+    
+    // 1. Soft-delete the transaction
+    const { error: txnError } = await supabase
+      .from('transactions')
+      .update({ is_deleted: true })
+      .eq('id', txn.id);
+
+    if (txnError) {
+      console.error('Error deleting transaction:', txnError);
+      setProcessing(prev => ({ ...prev, [`delete_${txn.id}`]: false }));
+      return;
+    }
+
+    // 2. If it's a primary transaction (Investment or Settlement), delete the investor
+    if (txn.investor_id && !txn.month_num) {
+      await supabase.from('investors').update({ is_deleted: true }).eq('id', txn.investor_id);
+    } 
+    // 3. If it's an interest transaction, delete the payment record
+    else if (txn.investor_id && txn.month_num) {
+      await supabase.from('interest_payments').update({ is_deleted: true })
+        .eq('investor_id', txn.investor_id)
+        .eq('month_number', txn.month_num);
+    }
+
+    setProcessing(prev => ({ ...prev, [`delete_${txn.id}`]: false }));
+  };
+
+  const requestDelete = (e, txn) => {
+    e.stopPropagation(); // Don't trigger transaction click logic
+    setConfirmModal({
+      isOpen: true,
+      data: txn
+    });
   };
 
   const formatDate = (dateString) => {
@@ -101,6 +137,13 @@ const History = () => {
                   <div className={`txn-status ${txn.status === 'Completed' ? 'badge-success' : 'badge-danger'}`}>
                     {txn.status}
                   </div>
+                  <button 
+                    className="icon-btn delete-btn-history"
+                    onClick={(e) => requestDelete(e, txn)}
+                    disabled={processing[`delete_${txn.id}`]}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
 
               </div>
@@ -108,6 +151,19 @@ const History = () => {
           )}
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, data: null })}
+        onConfirm={() => {
+          if (confirmModal.data) handleDeleteTransaction(confirmModal.data);
+          setConfirmModal({ isOpen: false, data: null });
+        }}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete the transaction "${confirmModal.data?.name}"? This will hide it from history but will not change the total balance.`}
+        confirmText="Delete"
+        isDanger={true}
+      />
     </div>
   );
 };

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   investor_id uuid, -- Link to investor for syncing edits
   month_num integer, -- Link to month for interest syncing
   bg_color text NOT NULL,
+  is_deleted boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now())
 );
 
@@ -61,16 +62,16 @@ CREATE OR REPLACE FUNCTION public.sync_investor_to_transactions()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.category = 'investment' THEN
-    INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, bg_color)
-    VALUES (NEW.name || ' (Investment)', UPPER(LEFT(NEW.name, 1)), NEW.amount, 'Completed', 'Investment', NEW.id, '#5c7cfa')
+    INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, bg_color, is_deleted)
+    VALUES (NEW.name || ' (Investment)', UPPER(LEFT(NEW.name, 1)), NEW.amount, 'Completed', 'Investment', NEW.id, '#5c7cfa', COALESCE(NEW.is_deleted, false))
     ON CONFLICT (investor_id) WHERE (month_num IS NULL)
-    DO UPDATE SET amount = EXCLUDED.amount, name = EXCLUDED.name, txn_type = EXCLUDED.txn_type, bg_color = EXCLUDED.bg_color;
+    DO UPDATE SET amount = EXCLUDED.amount, name = EXCLUDED.name, txn_type = EXCLUDED.txn_type, bg_color = EXCLUDED.bg_color, is_deleted = EXCLUDED.is_deleted;
   ELSE
     -- For 'investor' category, we treat the principal as a 'Settlement' (Deduction from balance)
-    INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, bg_color)
-    VALUES (NEW.name || ' (Principal)', UPPER(LEFT(NEW.name, 1)), NEW.amount, 'Completed', 'Settlement', NEW.id, '#f06595')
+    INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, bg_color, is_deleted)
+    VALUES (NEW.name || ' (Principal)', UPPER(LEFT(NEW.name, 1)), NEW.amount, 'Completed', 'Settlement', NEW.id, '#f06595', COALESCE(NEW.is_deleted, false))
     ON CONFLICT (investor_id) WHERE (month_num IS NULL)
-    DO UPDATE SET amount = EXCLUDED.amount, name = EXCLUDED.name, txn_type = EXCLUDED.txn_type, bg_color = EXCLUDED.bg_color;
+    DO UPDATE SET amount = EXCLUDED.amount, name = EXCLUDED.name, txn_type = EXCLUDED.txn_type, bg_color = EXCLUDED.bg_color, is_deleted = EXCLUDED.is_deleted;
   END IF;
   
   RETURN NEW;
@@ -88,7 +89,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_txn_sync_interest ON public.transactions (
 
 -- Trigger for sync
 CREATE OR REPLACE TRIGGER tr_sync_investor_txn
-AFTER INSERT OR UPDATE OF amount, name ON public.investors
+AFTER INSERT OR UPDATE OF amount, name, is_deleted ON public.investors
 FOR EACH ROW EXECUTE FUNCTION public.sync_investor_to_transactions();
 
 
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS public.investors (
   interest numeric DEFAULT 0,
   total_balance numeric DEFAULT 0,
   is_done boolean DEFAULT false,
+  is_deleted boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now())
 );
 
@@ -123,6 +125,7 @@ CREATE TABLE IF NOT EXISTS public.interest_payments (
   investor_id uuid REFERENCES public.investors(id),
   month_number integer NOT NULL,
   amount numeric NOT NULL,
+  is_deleted boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
   UNIQUE(investor_id, month_number)
 );
@@ -146,17 +149,17 @@ DECLARE
 BEGIN
   SELECT name INTO v_inv_name FROM public.investors WHERE id = NEW.investor_id;
   
-  INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, month_num, bg_color)
-  VALUES (v_inv_name || ' (Month ' || NEW.month_number || ')', UPPER(LEFT(v_inv_name, 1)), NEW.amount, 'Completed', 'Interest', NEW.investor_id, NEW.month_number, '#20c997')
+  INSERT INTO public.transactions (name, initials, amount, status, txn_type, investor_id, month_num, bg_color, is_deleted)
+  VALUES (v_inv_name || ' (Month ' || NEW.month_number || ')', UPPER(LEFT(v_inv_name, 1)), NEW.amount, 'Completed', 'Interest', NEW.investor_id, NEW.month_number, '#20c997', COALESCE(NEW.is_deleted, false))
   ON CONFLICT (investor_id, month_num) WHERE (txn_type = 'Interest')
-  DO UPDATE SET amount = EXCLUDED.amount;
+  DO UPDATE SET amount = EXCLUDED.amount, is_deleted = EXCLUDED.is_deleted;
   
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE TRIGGER tr_sync_interest_txn
-AFTER INSERT OR UPDATE OF amount ON public.interest_payments
+AFTER INSERT OR UPDATE OF amount, is_deleted ON public.interest_payments
 FOR EACH ROW EXECUTE FUNCTION public.sync_interest_to_transactions();
 
 -- 5. Dashboard Totals Logic (Regular function that can be called manually)
@@ -238,7 +241,7 @@ WHERE status = 'Pending' AND txn_type IS NOT NULL;
 -- 11. FORCE DASHBOARD RECALCULATION NOW
 DO $$
 BEGIN
-  PERFORM public.recalculate_dashboard();
+  SELECT public.recalculate_dashboard();
 END $$;
 
 -- 11. FORCE CACHE RELOAD

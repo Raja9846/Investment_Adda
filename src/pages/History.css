@@ -109,6 +109,32 @@
   color: var(--danger);
 }
 
+.txn-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.delete-btn-history {
+  background: transparent;
+  color: #adb5bd;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn-history:hover {
+  background: rgba(255, 77, 77, 0.1);
+  color: #ff4d4f;
+}
+
 .clickable-txn {
   cursor: pointer;
   border: 1px solid rgba(255, 77, 77, 0.3);

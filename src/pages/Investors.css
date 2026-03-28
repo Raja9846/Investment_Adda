@@ -101,6 +101,25 @@
   opacity: 0.5;
 }
 
+.delete-btn {
+  color: #adb5bd;
+}
+
+.delete-btn:hover {
+  background: rgba(250, 82, 82, 0.1) !important;
+  color: #fa5252 !important;
+}
+
+.small-delete {
+  padding: 4px !important;
+  color: #adb5bd;
+}
+
+.small-delete:hover {
+  background: rgba(250, 82, 82, 0.1) !important;
+  color: #fa5252 !important;
+}
+
 /* Details Dropdown */
 .months-details {
   display: none;
@@ -129,9 +148,8 @@
 }
 
 .is-done-card {
-  opacity: 0.6;
-  filter: grayscale(0.5);
-  pointer-events: none; /* Disable interaction for completed cards */
+  opacity: 0.8;
+  filter: grayscale(0.2);
 }
 
 .is-done-card .tick-btn {
